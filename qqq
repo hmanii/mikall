@@ -1,0 +1,249 @@
+View status
+askod-stage2-app
+DOTUA
+askod-stage
+West Europe
+Running
+Windows
+Standard_B2as_v2
+172.211.240.64
+2
+View status
+askod-tunnel-vm
+DOTUA
+askod-prod
+West Europe
+Running
+Linux
+Standard_B4als_v2
+20.86.60.253
+1
+View status
+DOT-AAD-Connect
+DOTUA
+dot-dcs-rg
+West Europe
+Running
+Windows
+Standard_B2ms
+-
+1
+View status
+DOT-callcentre
+DOTUA
+dot-callcentre
+Poland Central
+Running
+Linux
+Standard_B2s
+-
+1
+View status
+dot-chain-analytics-docker
+DOTUA
+dot-chain-prod-asr-1
+Poland Central
+Running
+Linux
+Standard_B4ms
+74.248.154.195
+1
+View status
+dot-chain-data-gateway
+DOTUA
+dot-chain-prod-asr-1
+Poland Central
+Running
+Windows
+Standard_D4s_v3
+20.215.253.45
+1
+View status
+dot-chain-power-bi
+DOTUA
+dot-chain-prod-asr-1
+Poland Central
+Running
+Windows
+Standard_E8s_v3
+20.215.252.139
+3
+View status
+DOT-DC01
+DOTUA
+dot-dcs-rg
+West Europe
+Running
+Windows
+Standard_B2ms
+-
+1
+View status
+DOT-DC02
+DOTUA
+DOT-DCS-RG
+West Europe
+Running
+Windows
+Standard_B2ms
+-
+1
+View status
+DOT-Master-recovery
+DOTUA
+AZURE-WE-MASTER-TEST
+West Europe
+Running
+Windows
+Standard_B4s_v2
+-
+4
+View status
+dot-medoc
+DOTUA
+dot-buh-we
+West Europe
+Running
+Windows
+Standard_D4s_v3
+-
+1
+View status
+DOT-monitor
+DOTUA
+dot-dcs-rg
+Poland Central
+Running
+Linux
+Standard_D2s_v3
+20.215.252.183
+1
+View status
+dot-printsrv
+DOTUA
+dot-printsrv_group
+West Europe
+Running
+Windows
+Standard_D4s_v3
+-
+1
+View status
+DOTUASITE
+DOTUA
+newsite
+Poland Central
+Running
+Linux
+Standard_D2s_v3
+20.215.32.72
+1
+View status
+firewall01
+DOTUA
+PALO-ALTO-TRANSIT-GROUP
+Poland Central
+Running
+Linux
+Standard_DS3_v2
+20.215.41.47
+1
+Enable periodic assessment
+firewall02
+DOTUA
+palo-alto-transit-group
+Poland Central
+Running
+Linux
+Standard_DS3_v2
+20.215.194.8
+1
+Enable periodic assessment
+Gitlab2
+DOTUA
+DEV_GITLAB
+West Europe
+Running
+Linux
+Standard_D4lds_v5
+74.234.230.201
+1
+View status
+Master
+DOTUA
+Azure-EU-Master
+West Europe
+Running
+Windows
+Standard_B4s_v2
+-
+2
+View status
+QradarEFPCollector
+DOTUA
+SIEM
+West Europe
+Running
+Linux
+Standard_D8ads_v5
+-
+2
+Enable periodic assessment
+sentry
+DOTUA
+DOT-CHAIN
+West Europe
+Running
+Linux
+Standard_B4as_v2
+40.68.28.0
+1
+View status
+sentry-prod
+DOTUA
+dot-chain-prod
+West Europe
+Running
+Linux
+Standard_B4as_v2
+52.236.168.211
+1
+View status
+SysLogA2
+DOTUA
+dot-dcs-rg
+West Europe
+Running
+Linux
+Standard_B2ls_v2
+13.94.241.76
+1
+View status
+TenableCore
+DOTUA
+TENABLE
+Germany West Central
+Running
+Linux
+Standard_D2lds_v5
+4.185.141.57
+1
+Enable periodic assessment
+TenableWAS
+DOTUA
+Tenable
+Germany West Central
+Running
+Linux
+Standard_D8as_v4
+4.184.236.200
+1
+Enable periodic assessment
+vm-sql-decryptor-service
+DOTUA
+DOT-CHAIN
+Poland Central
+Running
+Linux
+Standard_B2s
+-

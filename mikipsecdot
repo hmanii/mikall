@@ -1,0 +1,183 @@
+/ip ipsec policy group
+add name=group14
+
+/ip ipsec profile
+set [ find default=yes ] dpd-interval=2m dpd-maximum-failures=5
+add dh-group=modp2048 dpd-interval=45s enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=1h name=Azure_IPsec_phase1 nat-traversal=no
+add dh-group=modp4096 enc-algorithm=aes-256 hash-algorithm=sha512 lifetime=8h name=palo-alto
+
+/ip ipsec peer
+add address=20.215.248.98/32 disabled=yes exchange-mode=ike2 name=palo-alto profile=palo-alto
+add address=20.56.66.54/32 disabled=yes exchange-mode=ike2 local-address=95.67.32.90 name=Azure profile=Azure_IPsec_phase1
+
+/ip ipsec proposal
+set [ find default=yes ] disabled=yes
+add auth-algorithms=sha256 enc-algorithms=aes-256-cbc lifetime=1h name=Azure_phase2 pfs-group=modp2048
+add auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h name=palo-crypto-profile pfs-group=modp4096
+
+/ip firewall filter
+add action=accept chain=input in-interface=sfp-sfpplus2 protocol=ipsec-esp
+add action=accept chain=mngmnt-input protocol=ipsec-ah
+add action=accept chain=input ipsec-policy=in,ipsec protocol=icmp src-address=192.168.35.4
+add action=accept chain=it-input protocol=ipsec-ah
+add action=accept chain=lan-input protocol=ipsec-ah
+add action=accept chain=buh-input protocol=ipsec-ah
+add action=accept chain=pam-input protocol=ipsec-ah
+add action=accept chain=input comment=Allow_DNS_DHCP_from_lan_guest ipsec-policy=in,ipsec src-address=10.0.23.5
+add action=accept chain=it-forward dst-address-list=Azure_IT dst-port=22,53,80,443,1433,1812,1813,3001,3389,5060,5391,8282,8283,9116,9090 ipsec-policy=out,ipsec log-prefix=IT_LOG protocol=tcp #правило застосовується для трафіку, що йде через IPsec.
+add action=accept chain=it-forward dst-address-list=Azure_IT dst-port=53,514,1812,1813,3389,5060,10000-20000 ipsec-policy=out,ipsec protocol=udp
+add action=accept chain=it-forward dst-address-list=Azure_IT ipsec-policy=out,ipsec protocol=icmp
+add action=accept chain=it-forward ipsec-policy=out,none out-interface-list=WAN
+add action=accept chain=buh-forward dst-address-list=Azure_accounting dst-port=53,80,443,445,3389,8282,8283,9996,9997 ipsec-policy=out,ipsec log-prefix=TEST_LOG_ protocol=tcp
+add action=accept chain=buh-forward dst-address-list=Azure_accounting dst-port=53,3389,9996,9997 ipsec-policy=out,ipsec protocol=udp
+add action=accept chain=buh-forward ipsec-policy=out,none out-interface-list=WAN
+add action=accept chain=pam-forward comment=Allow_forward_from_Guest dst-address-list=Azure_PAM dst-port=22,80,443,8282,8283 ipsec-policy=out,ipsec protocol=tcp
+add action=accept chain=pam-forward dst-address-list=Azure_PAM dst-port=53,67-68,123 ipsec-policy=out,ipsec protocol=udp
+add action=accept chain=pam-forward ipsec-policy=out,none out-interface-list=WAN
+add action=accept chain=lan-forward disabled=yes dst-address-list=Azure_IT ipsec-policy=out,ipsec
+add action=accept chain=lan-forward comment=Allow_forward_from_ALL_LAN dst-address-list=Azure_ALL dst-port=80,443,5060 ipsec-policy=out,ipsec protocol=tcp
+add action=accept chain=lan-forward comment=Allow_forward_from_ALL_LAN dst-address-list=Azure_ALL dst-port=5060,10000-20000 ipsec-policy=out,ipsec protocol=udp
+add action=accept chain=lan-forward ipsec-policy=out,none out-interface=vlan-106-print
+add action=accept chain=lan-forward ipsec-policy=out,none out-interface=bridge
+add action=accept chain=lan-forward ipsec-policy=out,none out-interface-list=WAN
+add action=accept chain=mngmnt-forward dst-address-list=Azure_IT ipsec-policy=out,ipsec 
+add action=accept chain=forward comment="Router fw IPsec out accept" dst-address-list=Allow_RDP_Azure dst-port=9115,9093,3001,3050 ipsec-policy=out,ipsec log-prefix=IPSEC_TCP_ protocol=tcp src-address-list=Allow_LAN_to_IPsec
+add action=accept chain=forward comment="Router fw IPsec out accept" dst-address-list=Allow_RDP_Azure dst-port=53,514,1812,1813,3389,9996,3050 ipsec-policy=out,ipsec log=yes log-prefix=IPSEC_UDP_ protocol=udp src-address-list=Allow_LAN_to_IPsec
+add action=accept chain=forward comment="Router fw IPsec out accept" dst-address-list=Allow_RDP_Azure ipsec-policy=out,ipsec log-prefix=IPSEC_ICMP_ protocol=icmp src-address-list=Allow_LAN_to_IPsec
+add action=drop chain=forward comment=Drop_LAN_to_WAN dst-port=23,135-139,445,7680 in-interface-list=VLAN_to_INET ipsec-policy=out,none out-interface-list=WAN protocol=tcp
+add action=drop chain=forward dst-port=23,135-139,445,7680 in-interface-list=VLAN_to_INET ipsec-policy=out,none out-interface-list=WAN protocol=udp
+add action=accept chain=forward comment=Allow_LAN_to_WAN in-interface-list=VLAN_to_INET ipsec-policy=out,none log-prefix=OUT_INTERFACE_LISTS_ out-interface-list=WAN
+add action=src-nat chain=srcnat ipsec-policy=out,none out-interface=sfp-sfpplus2 src-address=172.16.10.0/24 to-addresses=95.67.32.90 #правило застосовується, якщо трафік не йде через IPsec.
+add action=src-nat chain=srcnat ipsec-policy=out,none out-interface=sfp-sfpplus2 src-address=172.16.4.0/23 to-addresses=95.67.32.94
+add action=src-nat chain=srcnat ipsec-policy=out,none out-interface=sfp-sfpplus2 to-addresses=95.67.32.92
+
+/ip ipsec identity
+add my-id=address:185.41.250.116 peer=palo-alto policy-template-group=group14 remote-id=address:20.215.248.98
+add peer=Azure
+
+/ip ipsec policy
+set 0 disabled=yes
+add disabled=yes dst-address=10.10.10.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.0.23.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.8.0.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.0.6.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.10.252.0/29 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.0.5.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.2.0.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=10.1.0.0/24 peer=Azure proposal=Azure_phase2 src-address=172.16.0.0/16 tunnel=yes
+add disabled=yes dst-address=192.168.35.0/24 peer=palo-alto proposal=palo-crypto-profile src-address=192.168.0.0/24 tunnel=yes
+add disabled=yes dst-address=192.168.35.0/24 peer=palo-alto proposal=palo-crypto-profile src-address=172.16.10.0/24 tunnel=yes
+
+/system logging
+set 0 topics=info,!firewall
+set 1 topics=error,script
+add disabled=yes prefix=BUH_TRAFFIC_ topics=info,firewall
+add disabled=yes prefix=IPSEC_ topics=ipsec,debug
+add disabled=yes prefix=IPSEC_ topics=ipsec,debug
+
+/system scheduler
+add disabled=yes interval=5m name=ipsec on-event=ipsec-script policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon start-date=2025-11-11 start-time=10:00:00
+
+/system script
+add dont-require-permissions=no name=ipsec-script owner=mk-8 policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon source="\
+    \r\
+    \n:if ([:len [/system script environment find name=\"ipsec_check_running\"\
+    ]] > 0) do={\r\
+    \n    :log warning \"IPSec check already running \97 exiting.\"\r\
+    \n    :return\r\
+    \n}\r\
+    \n:global \"ipsec_check_running\" true\r\
+    \n\r\
+    \n:local peers {\"10.10.10.6\"; \"10.10.10.4\"; \"10.0.23.5\"}\r\
+    \n:local ipsecPeerName \"Azure\"\r\
+    \n:local webhookURL \"https://dotua.webhook.office.com/webhookb2/a81aee41-\
+    5d02-43c0-b45f-911b6b4781d5@430feac2-3812-4946-be83-a9ff788c4e23/IncomingW\
+    ebhook/506945de41ae426e8d54fc15274fa804/52e067de-21f2-4bb9-821c-adf4d6b50d\
+    c0/V2FfrsBI5V3lyjdy6i5HXY5T5X5QES6QdUQdUiLQEOm681\"\r\
+    \n:local alertHeader \"Content-Type: application/json\"\r\
+    \n\r\
+    \n:global ipsecDownSince\r\
+    \n:global ipsecPreviouslyDown\r\
+    \n\r\
+    \n:local failureDetected false\r\
+    \n:local failedPeers \"\"\r\
+    \n\r\
+    \n:foreach peer in=\$peers do={\r\
+    \n    :local pingResult [ping \$peer count=6]\r\
+    \n    :log info \"Ping result for \$peer: \$pingResult\"\r\
+    \n    :if (\$pingResult = 0) do={\r\
+    \n        :set failureDetected true\r\
+    \n        :set failedPeers (\$failedPeers . \"\$peer failed; \")\r\
+    \n    }\r\
+    \n}\r\
+    \n\r\
+    \n:if (\$failureDetected = true) do={\r\
+    \n\r\
+    \n    :if ([:typeof \$ipsecDownSince] != \"time\") do={\r\
+    \n        :set ipsecDownSince [/system clock get time]\r\
+    \n        :log warning \"Tunnel: \$ipsecPeerName marked as DOWN at \$ipsec\
+    DownSince\"\r\
+    \n    }\r\
+    \n\r\
+    \n    :if (\$ipsecPreviouslyDown != true) do={\r\
+    \n        :log error \"Tunnel is down! Notifying and restarting IPSec.\"\r\
+    \n\r\
+    \n        /tool fetch http-method=post \\\r\
+    \n            http-header-field=\$alertHeader \\\r\
+    \n            http-data=\"{\\\"text\\\": \\\"IPSec down: \$failedPeers (At\
+    : \$ipsecDownSince). Reconnecting...\\\"}\" \\\r\
+    \n            url=\$webhookURL keep-result=no\r\
+    \n\r\
+    \n        /ip ipsec peer disable [find name=\"\$ipsecPeerName\"]\r\
+    \n        /ip ipsec policy disable [find peer=\"\$ipsecPeerName\"]\r\
+    \n        /ip ipsec identity disable [find peer=\"\$ipsecPeerName\"]\r\
+    \n        /ip ipsec active-peers kill-connections\r\
+    \n        /ip ipsec installed-sa flush\r\
+    \n        :delay 5s\r\
+    \n        /ip ipsec identity enable [find peer=\"\$ipsecPeerName\"]\r\
+    \n        :foreach i in=[/ip ipsec policy find where (peer=\"\$ipsecPeerNa\
+    me\")] do={\r\
+    \n            /ip ipsec policy enable \$i\r\
+    \n            :delay 5s\r\
+    \n        }\r\
+    \n        :delay 5s\r\
+    \n        /ip ipsec peer enable [find name=\"\$ipsecPeerName\"]\r\
+    \n        :delay 5s\r\
+    \n        :foreach i in=[/ip ipsec policy find where (ph2-state=\"no-phase\
+    2\")] do={\r\
+    \n            /ip ipsec policy disable \$i\r\
+    \n            :delay 5s\r\
+    \n            /ip ipsec policy enable \$i\r\
+    \n        }\r\
+    \n    }\r\
+    \n\r\
+    \n    :set ipsecPreviouslyDown true\r\
+    \n\r\
+    \n} else={\r\
+    \n\r\
+    \n    :if (\$ipsecPreviouslyDown = true) do={\r\
+    \n\r\
+    \n        :local now [/system clock get time]\r\
+    \n        :log info \"Tunnel is now UP \97 was down since \$ipsecDownSince\
+    \"\r\
+    \n\r\
+    \n        /tool fetch http-method=post \\\r\
+    \n            http-header-field=\$alertHeader \\\r\
+    \n            http-data=\"{\\\"text\\\": \\\"IPSec tunnel restored at \$no\
+    w. Previously down since \$ipsecDownSince.\\\"}\" \\\r\
+    \n            url=\$webhookURL keep-result=no\r\
+    \n\r\
+    \n        :set ipsecDownSince\r\
+    \n        :set ipsecPreviouslyDown false\r\
+    \n    } else={\r\
+    \n        :log info \"IPSec tunnel is up. All peers reachable.\"\r\
+    \n    }\r\
+    \n}\r\
+    \n\r\
+    \n\r\
+    \n:global \"ipsec_check_running\"\r\
+    \n:set \"ipsec_check_running\"\r\
+    \n"
+
+
+

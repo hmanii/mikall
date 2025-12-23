@@ -1,0 +1,26 @@
+Що таке ACL у MikroTik?
+Це набір правил, які визначають, який трафік дозволяти або блокувати.
+В MikroTik ACL реалізуються через:
+
+IP Firewall Filter (L3/L4 рівень – IP, TCP, UDP, ICMP)
+Bridge Filter (L2 рівень – MAC, VLAN, EtherType)
+
+
+Де застосовуються ACL?
+IP Firewall – для маршрутизованого трафіку (між VLAN, WAN, LAN).
+Bridge Filter – для трафіку всередині одного bridge (наприклад, блокування між клієнтами в одному VLAN).
+
+Приклад ACL для VLAN:
+Заборонити доступ між VLAN:
+/ip firewall filter
+add chain=forward action=drop in-interface=vlan10 out-interface=vlan20 comment="Block VLAN10 to VLAN20"
+add chain=forward action=drop in-interface=vlan20 out-interface=vlan10 comment="Block VLAN20 to VLAN10"
+
+Дозволити тільки HTTP/HTTPS з VLAN10 до WAN:
+/ip firewall filter
+add chain=forward action=accept protocol=tcp dst-port=80,443 in-interface=vlan10 out-interface=ether1 comment="Allow HTTP/HTTPS from VLAN10"
+add chain=forward action=drop in-interface=vlan10 out-interface=ether1 comment="Drop other traffic from VLAN10 to WAN"
+
+Bridge ACL (L2) – блокування MAC або VLAN:
+/interface bridge filter
+add chain=forward action=drop vlan-id=107 comment="Block VLAN107 traffic on bridge"

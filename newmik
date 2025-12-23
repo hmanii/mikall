@@ -1,0 +1,426 @@
+/ip address add address=192.168.200.1/24 interface=ether1 network=192.168.200.0
+/ip service set ssh address=192.168.200.0/24
+
+/interface bridge add name=br-1 vlan-filtering=yes protocol-mode=rstp
+add admin-mac=0E:0B:CC:DE:73:66 auto-mac=no name=br-1
+
+/interface bridge set br-2 admin-mac=00:15:5D:40:D0:00 auto-mac=no
+
+/interface bridge port add bridge=br-1 interface=ether2 internal-path-cost=10 path-cost=10
+/interface bridge port add bridge=br-1 interface=ether3 pvid=21 internal-path-cost=10 path-cost=10
+
+/interface vlan add name=vlan21 interface=br-1 vlan-id=21
+/interface bridge vlan add bridge=br-1 vlan-ids=21 tagged=br-1,ether2 untagged=ether3
+
+/ip address add address=192.168.21.10/24 interface=vlan21
+
+/ip route add disabled=no distance=1 dst-address=0.0.0.0/0 gateway=192.168.210.10 routing-table=main scope=30 suppress-hw-offload=no target-scope=10
+
+/ip firewall filter add action=accept chain=input in-interface=br-1 comment=Allow_in_br-1
+/ip firewall filter add action=accept chain=output out-interface=br-1 comment=Allow_out_br-1
+/ip firewall filter add action=accept chain=intput in-interface=vlan20 comment=Allow_IN_IN_vlan20
+/ip firewall filter add action=accept chain=output out-interface=vlan20 comment=Allow_Out_Out_vlan20
+/ip firewall filter add action=accept chain=forward in-interface=vlan20 comment=Allow_forward_in_vlan20
+/ip firewall filter add action=accept chain=forward out-interface=vlan20 comment=Allow_forward_out_vlan20
+
+/interface list add name=vlan20
+/interface list member add interface=vlan20 list=BASE
+/ip neighbor discovery-settings set discover-interface-list=BASE
+/tool mac-server mac-winbox set allowed-interface-list=BASE
+/tool mac-server set allowed-interface-list=BASE
+
+
+
+login as: admin
+                                                                                                                                               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  MMM      MMM       KKK                          TTTTTTTTTTT      KKK
+  MMMM    MMMM       KKK                          TTTTTTTTTTT      KKK
+  MMM MMMM MMM  III  KKK  KKK  RRRRRR     OOOOOO      TTT     III  KKK  KKK
+  MMM  MM  MMM  III  KKKKK     RRR  RRR  OOO  OOO     TTT     III  KKKKK
+  MMM      MMM  III  KKK KKK   RRRRRR    OOO  OOO     TTT     III  KKK KKK
+  MMM      MMM  III  KKK  KKK  RRR  RRR   OOOOOO      TTT     III  KKK  KKK
+
+  MikroTik RouterOS 7.20.5 (c) 1999-2025       https://www.mikrotik.com/
+
+
+
+ROUTER HAS NO SOFTWARE KEY
+----------------------------
+You have 12h39m to configure the router to be remotely accessible,
+and to enter the key by pasting it in a Telnet window or in Winbox.
+Turn off the device to stop the timer.
+See www.mikrotik.com/key for more details.
+
+Current installation "software ID": NR0D-6MCK
+Please press "Enter" to continue!
+
+
+[admin@MikroTik] > export
+# 2025-12-09 12:30:45 by RouterOS 7.20.5
+# software id = NR0D-6MCK
+#
+/interface bridge
+add name=br-2 vlan-filtering=yes
+add name=br-3 port-cost-mode=short vlan-filtering=yes
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+/interface vlan
+add interface=br-2 name=vlan20 vlan-id=20
+add interface=br-3 name=vlan21 vlan-id=21
+/ip pool
+add name=pool_vlan20 ranges=192.168.20.50-192.168.20.200
+add name=pool-vlan21 ranges=192.168.21.50-192.168.21.200
+/ip dhcp-server
+add address-pool=pool_vlan20 interface=vlan20 lease-time=3d name=dhcp_vlan20
+add address-pool=pool-vlan21 interface=vlan21 lease-time=3d name=dhcp_vlan21
+/port
+set 0 name=serial0
+set 1 name=serial1
+/interface bridge port
+add bridge=br-2 interface=ether2 internal-path-cost=10 path-cost=10
+add bridge=br-2 interface=ether3 internal-path-cost=10 path-cost=10 pvid=20
+add bridge=br-3 interface=ether5 internal-path-cost=10 path-cost=10 pvid=21
+/interface bridge vlan
+add bridge=br-2 tagged=br-2,ether2 untagged=ether3 vlan-ids=20
+add bridge=br-3 tagged=br-3 untagged=ether5 vlan-ids=21
+/ip address
+add address=192.168.200.1/24 interface=ether1 network=192.168.200.0
+add address=192.168.20.1/24 interface=vlan20 network=192.168.20.0
+add address=192.168.21.1/24 interface=vlan21 network=192.168.21.0
+/ip dhcp-server network
+add address=192.168.20.0/24 dns-server=1.1.1.1,8.8.8.8 gateway=192.168.20.1 netmask=24
+add address=192.168.21.0/24 dns-server=8.8.8.8 gateway=192.168.21.1 netmask=24
+/ip firewall filter
+add action=accept chain=input comment=br-2InputAccept in-interface=br-2
+add action=accept chain=output comment=br-2OutputAccept out-interface=br-2
+add action=accept chain=output comment=Allow_all_input_from_vlan20 out-interface=vlan20
+add action=accept chain=forward comment=Allow_all_output_forward_to_vlan20 in-interface=vlan20
+add action=accept chain=forward comment=Allow_all_forward_from_vlan20 out-interface=vlan20
+add action=accept chain=input comment=Allow_all_to_vlan20 in-interface=vlan20
+add action=accept chain=input in-interface=br-3
+add action=accept chain=output out-interface=br-3
+add action=accept chain=input comment=vlan21-in in-interface=vlan21
+add action=accept chain=output comment=vlan21-out out-interface=vlan21
+/ip service
+set ssh address=192.168.200.0/24
+/tool traffic-monitor
+add comment=testdhcp interface=br-3 name=traf1
+[admin@MikroTik] > /interface
+[admin@MikroTik] /interface> print
+Flags: R - RUNNING; S - SLAVE
+Columns: NAME, TYPE, ACTUAL-MTU, L2MTU, MAC-ADDRESS
+#    NAME    TYPE      ACTUAL-MTU  L2MTU  MAC-ADDRESS
+0 R  ether1  ether           1500         00:15:5D:40:D4:0F
+1 RS ether2  ether           1500         00:15:5D:40:D4:10
+2  S ether3  ether           1500         00:15:5D:40:D4:11
+3    ether4  ether           1500         00:15:5D:40:D4:12
+4  S ether5  ether           1500         00:15:5D:40:D4:17
+5 R  br-2    bridge          1500  65535  00:15:5D:40:D4:10
+6 R  br-3    bridge          1500  65535  00:15:5D:40:D4:17
+7 R  lo      loopback       65536         00:00:00:00:00:00
+8 R  vlan20  vlan            1500  65531  00:15:5D:40:D4:10
+9 R  vlan21  vlan            1500  65531  00:15:5D:40:D4:17
+[admin@MikroTik] /interface>
+
+
+login as: admin
+                                                                                                                                               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  MMM      MMM       KKK                          TTTTTTTTTTT      KKK
+  MMMM    MMMM       KKK                          TTTTTTTTTTT      KKK
+  MMM MMMM MMM  III  KKK  KKK  RRRRRR     OOOOOO      TTT     III  KKK  KKK
+  MMM  MM  MMM  III  KKKKK     RRR  RRR  OOO  OOO     TTT     III  KKKKK
+  MMM      MMM  III  KKK KKK   RRRRRR    OOO  OOO     TTT     III  KKK KKK
+  MMM      MMM  III  KKK  KKK  RRR  RRR   OOOOOO      TTT     III  KKK  KKK
+
+  MikroTik RouterOS 7.20.5 (c) 1999-2025       https://www.mikrotik.com/
+
+
+
+ROUTER HAS NO SOFTWARE KEY
+----------------------------
+You have 12h39m to configure the router to be remotely accessible,
+and to enter the key by pasting it in a Telnet window or in Winbox.
+Turn off the device to stop the timer.
+See www.mikrotik.com/key for more details.
+
+Current installation "software ID": NR0D-6MCK
+Please press "Enter" to continue!
+
+
+[admin@MikroTik] > export
+# 2025-12-09 12:30:45 by RouterOS 7.20.5
+# software id = NR0D-6MCK
+#
+/interface bridge
+add name=br-2 vlan-filtering=yes
+add name=br-3 port-cost-mode=short vlan-filtering=yes
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+/interface vlan
+add interface=br-2 name=vlan20 vlan-id=20
+add interface=br-3 name=vlan21 vlan-id=21
+/ip pool
+add name=pool_vlan20 ranges=192.168.20.50-192.168.20.200
+add name=pool-vlan21 ranges=192.168.21.50-192.168.21.200
+/ip dhcp-server
+add address-pool=pool_vlan20 interface=vlan20 lease-time=3d name=dhcp_vlan20
+add address-pool=pool-vlan21 interface=vlan21 lease-time=3d name=dhcp_vlan21
+/port
+set 0 name=serial0
+set 1 name=serial1
+/interface bridge port
+add bridge=br-2 interface=ether2 internal-path-cost=10 path-cost=10
+add bridge=br-2 interface=ether3 internal-path-cost=10 path-cost=10 pvid=20
+add bridge=br-3 interface=ether5 internal-path-cost=10 path-cost=10 pvid=21
+/interface bridge vlan
+add bridge=br-2 tagged=br-2,ether2 untagged=ether3 vlan-ids=20
+add bridge=br-3 tagged=br-3 untagged=ether5 vlan-ids=21
+/ip address
+add address=192.168.200.1/24 interface=ether1 network=192.168.200.0
+add address=192.168.20.1/24 interface=vlan20 network=192.168.20.0
+add address=192.168.21.1/24 interface=vlan21 network=192.168.21.0
+/ip dhcp-server network
+add address=192.168.20.0/24 dns-server=1.1.1.1,8.8.8.8 gateway=192.168.20.1 netmask=24
+add address=192.168.21.0/24 dns-server=8.8.8.8 gateway=192.168.21.1 netmask=24
+/ip firewall filter
+add action=accept chain=input comment=br-2InputAccept in-interface=br-2
+add action=accept chain=output comment=br-2OutputAccept out-interface=br-2
+add action=accept chain=output comment=Allow_all_input_from_vlan20 out-interface=vlan20
+add action=accept chain=forward comment=Allow_all_output_forward_to_vlan20 in-interface=vlan20
+add action=accept chain=forward comment=Allow_all_forward_from_vlan20 out-interface=vlan20
+add action=accept chain=input comment=Allow_all_to_vlan20 in-interface=vlan20
+add action=accept chain=input in-interface=br-3
+add action=accept chain=output out-interface=br-3
+add action=accept chain=input comment=vlan21-in in-interface=vlan21
+add action=accept chain=output comment=vlan21-out out-interface=vlan21
+/ip service
+set ssh address=192.168.200.0/24
+/tool traffic-monitor
+add comment=testdhcp interface=br-3 name=traf1
+[admin@MikroTik] > /interface
+[admin@MikroTik] /interface> print
+Flags: R - RUNNING; S - SLAVE
+Columns: NAME, TYPE, ACTUAL-MTU, L2MTU, MAC-ADDRESS
+#    NAME    TYPE      ACTUAL-MTU  L2MTU  MAC-ADDRESS
+0 R  ether1  ether           1500         00:15:5D:40:D4:0F
+1 RS ether2  ether           1500         00:15:5D:40:D4:10
+2  S ether3  ether           1500         00:15:5D:40:D4:11
+3    ether4  ether           1500         00:15:5D:40:D4:12
+4  S ether5  ether           1500         00:15:5D:40:D4:17
+5 R  br-2    bridge          1500  65535  00:15:5D:40:D4:10
+6 R  br-3    bridge          1500  65535  00:15:5D:40:D4:17
+7 R  lo      loopback       65536         00:00:00:00:00:00
+8 R  vlan20  vlan            1500  65531  00:15:5D:40:D4:10
+9 R  vlan21  vlan            1500  65531  00:15:5D:40:D4:17
+[admin@MikroTik] /interface> print
+Flags: R - RUNNING; S - SLAVE
+Columns: NAME, TYPE, ACTUAL-MTU, L2MTU, MAC-ADDRESS
+#    NAME    TYPE      ACTUAL-MTU  L2MTU  MAC-ADDRESS
+0 R  ether1  ether           1500         00:15:5D:40:D4:0F
+1 RS ether2  ether           1500         00:15:5D:40:D4:10
+2 RS ether3  ether           1500         00:15:5D:40:D4:11
+3    ether4  ether           1500         00:15:5D:40:D4:12
+4  S ether5  ether           1500         00:15:5D:40:D4:17
+5 R  br-2    bridge          1500  65535  00:15:5D:40:D4:10
+6 R  br-3    bridge          1500  65535  00:15:5D:40:D4:17
+7 R  lo      loopback       65536         00:00:00:00:00:00
+8 R  vlan20  vlan            1500  65531  00:15:5D:40:D4:10
+9 R  vlan21  vlan            1500  65531  00:15:5D:40:D4:17
+[admin@MikroTik] /interface> /
+[admin@MikroTik] > /export
+# 2025-12-09 12:44:07 by RouterOS 7.20.5
+# software id = NR0D-6MCK
+#
+/interface bridge
+add name=br-2 vlan-filtering=yes
+add name=br-3 port-cost-mode=short vlan-filtering=yes
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+/interface vlan
+add interface=br-2 name=vlan20 vlan-id=20
+add interface=br-3 name=vlan21 vlan-id=21
+/ip pool
+add name=pool_vlan20 ranges=192.168.20.50-192.168.20.200
+add name=pool-vlan21 ranges=192.168.21.50-192.168.21.200
+/ip dhcp-server
+add address-pool=pool_vlan20 interface=vlan20 lease-time=3d name=dhcp_vlan20
+add address-pool=pool-vlan21 interface=vlan21 lease-time=3d name=dhcp_vlan21
+/port
+set 0 name=serial0
+set 1 name=serial1
+/interface bridge port
+add bridge=br-2 interface=ether2 internal-path-cost=10 path-cost=10
+add bridge=br-2 interface=ether3 internal-path-cost=10 path-cost=10 pvid=20
+add bridge=br-3 interface=ether5 internal-path-cost=10 path-cost=10 pvid=21
+/interface bridge vlan
+add bridge=br-2 tagged=br-2,ether2 untagged=ether3 vlan-ids=20
+add bridge=br-3 tagged=br-3 untagged=ether5 vlan-ids=21
+/ip address
+add address=192.168.200.1/24 interface=ether1 network=192.168.200.0
+add address=192.168.20.1/24 interface=vlan20 network=192.168.20.0
+add address=192.168.21.1/24 interface=vlan21 network=192.168.21.0
+/ip dhcp-server network
+add address=192.168.20.0/24 dns-server=1.1.1.1,8.8.8.8 gateway=192.168.20.1 netmask=24
+add address=192.168.21.0/24 dns-server=8.8.8.8 gateway=192.168.21.1 netmask=24
+/ip firewall filter
+add action=accept chain=input comment=br-2InputAccept in-interface=br-2
+add action=accept chain=output comment=br-2OutputAccept out-interface=br-2
+add action=accept chain=output comment=Allow_all_input_from_vlan20 out-interface=vlan20
+add action=accept chain=forward comment=Allow_all_output_forward_to_vlan20 in-interface=vlan20
+add action=accept chain=forward comment=Allow_all_forward_from_vlan20 out-interface=vlan20
+add action=accept chain=input comment=Allow_all_to_vlan20 in-interface=vlan20
+add action=accept chain=input in-interface=br-3
+add action=accept chain=output out-interface=br-3
+add action=accept chain=input comment=vlan21-in in-interface=vlan21
+add action=accept chain=output comment=vlan21-out out-interface=vlan21
+/ip service
+set ssh address=192.168.200.0/24
+/tool traffic-monitor
+add comment=testdhcp interface=br-3 name=traf1
+[admin@MikroTik] > /interface/bridge
+[admin@MikroTik] /interface/bridge> print
+Flags: D - dynamic; X - disabled, R - running
+ 0  R name="br-2" mtu=auto actual-mtu=1500 l2mtu=65535 arp=enabled arp-timeout=auto mac-address=00:15:5D:40:D4:10 protocol-mode=rstp
+      fast-forward=yes igmp-snooping=no auto-mac=yes ageing-time=5m priority=0x8000 max-message-age=20s forward-delay=15s
+      transmit-hold-count=6 vlan-filtering=yes ether-type=0x8100 pvid=1 frame-types=admit-all ingress-filtering=yes dhcp-snooping=no
+      port-cost-mode=long mvrp=no max-learned-entries=auto
+
+ 1  R name="br-3" mtu=auto actual-mtu=1500 l2mtu=65535 arp=enabled arp-timeout=auto mac-address=00:15:5D:40:D4:17 protocol-mode=rstp
+      fast-forward=yes igmp-snooping=no auto-mac=yes ageing-time=5m priority=0x8000 max-message-age=20s forward-delay=15s
+      transmit-hold-count=6 vlan-filtering=yes ether-type=0x8100 pvid=1 frame-types=admit-all ingress-filtering=yes dhcp-snooping=no
+      port-cost-mode=short mvrp=no max-learned-entries=auto
+[admin@MikroTik] /interface/bridge> set 0 vlan-filtering=no
+[admin@MikroTik] /interface/bridge> set 0 vlan-filtering=yes
+[admin@MikroTik] /interface/bridge> /interface bridge set br-2 admin-mac=00:15:5D:40:D4:11 auto-mac=no
+[admin@MikroTik] /interface/bridge> /interface bridge set br-2 admin-mac=00:15:5D:40:D0:00 auto-mac=no
+[admin@MikroTik] /interface/bridge> /interface
+[admin@MikroTik] /interface> print
+Flags: R - RUNNING; S - SLAVE
+Columns: NAME, TYPE, ACTUAL-MTU, L2MTU, MAC-ADDRESS
+#    NAME    TYPE      ACTUAL-MTU  L2MTU  MAC-ADDRESS
+0 R  ether1  ether           1500         00:15:5D:40:D4:0F
+1 RS ether2  ether           1500         00:15:5D:40:D4:10
+2 RS ether3  ether           1500         00:15:5D:40:D4:11
+3    ether4  ether           1500         00:15:5D:40:D4:12
+4  S ether5  ether           1500         00:15:5D:40:D4:17
+5 R  br-2    bridge          1500  65535  00:15:5D:40:D0:00
+6 R  br-3    bridge          1500  65535  00:15:5D:40:D4:17
+7 R  lo      loopback       65536         00:00:00:00:00:00
+8 R  vlan20  vlan            1500  65531  00:15:5D:40:D0:00
+9 R  vlan21  vlan            1500  65531  00:15:5D:40:D4:17
+[admin@MikroTik] /interface> /interface bridge set br-2 admin-mac=00:15:5D:40:D4:11 auto-mac=no
+[admin@MikroTik] /interface> /export
+# 2025-12-09 12:52:15 by RouterOS 7.20.5
+# software id = NR0D-6MCK
+#
+/interface bridge
+add admin-mac=00:15:5D:40:D4:11 auto-mac=no name=br-2 vlan-filtering=yes
+add name=br-3 port-cost-mode=short vlan-filtering=yes
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no
+set [ find default-name=ether2 ] disable-running-check=no
+set [ find default-name=ether3 ] disable-running-check=no
+set [ find default-name=ether4 ] disable-running-check=no
+set [ find default-name=ether5 ] disable-running-check=no
+/interface vlan
+add interface=br-2 name=vlan20 vlan-id=20
+add interface=br-3 name=vlan21 vlan-id=21
+/ip pool
+add name=pool_vlan20 ranges=192.168.20.50-192.168.20.200
+add name=pool-vlan21 ranges=192.168.21.50-192.168.21.200
+/ip dhcp-server
+add address-pool=pool_vlan20 interface=vlan20 lease-time=3d name=dhcp_vlan20
+add address-pool=pool-vlan21 interface=vlan21 lease-time=3d name=dhcp_vlan21
+/port
+set 0 name=serial0
+set 1 name=serial1
+/interface bridge port
+add bridge=br-2 interface=ether2 internal-path-cost=10 path-cost=10
+add bridge=br-2 interface=ether3 internal-path-cost=10 path-cost=10 pvid=20
+add bridge=br-3 interface=ether5 internal-path-cost=10 path-cost=10 pvid=21
+/interface bridge vlan
+add bridge=br-2 tagged=br-2,ether2 untagged=ether3 vlan-ids=20
+add bridge=br-3 tagged=br-3 untagged=ether5 vlan-ids=21
+/ip address
+add address=192.168.200.1/24 interface=ether1 network=192.168.200.0
+add address=192.168.20.1/24 interface=vlan20 network=192.168.20.0
+add address=192.168.21.1/24 interface=vlan21 network=192.168.21.0
+/ip dhcp-server network
+add address=192.168.20.0/24 dns-server=1.1.1.1,8.8.8.8 gateway=192.168.20.1 netmask=24
+add address=192.168.21.0/24 dns-server=8.8.8.8 gateway=192.168.21.1 netmask=24
+/ip firewall filter
+add action=accept chain=input comment=br-2InputAccept in-interface=br-2
+add action=accept chain=output comment=br-2OutputAccept out-interface=br-2
+add action=accept chain=output comment=Allow_all_input_from_vlan20 out-interface=vlan20
+add action=accept chain=forward comment=Allow_all_output_forward_to_vlan20 in-interface=vlan20
+add action=accept chain=forward comment=Allow_all_forward_from_vlan20 out-interface=vlan20
+add action=accept chain=input comment=Allow_all_to_vlan20 in-interface=vlan20
+add action=accept chain=input in-interface=br-3
+add action=accept chain=output out-interface=br-3
+add action=accept chain=input comment=vlan21-in in-interface=vlan21
+add action=accept chain=output comment=vlan21-out out-interface=vlan21
+/ip service
+set ssh address=192.168.200.0/24
+/tool traffic-monitor
+add comment=testdhcp interface=br-3 name=traf1
+[admin@MikroTik] /interface>

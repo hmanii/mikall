@@ -1,0 +1,39 @@
+https://настройка-микротик.укр/nastrojka-mikrotik-ipsec-vpn-tunnel-mezhdu-ofisami/
+MikroTik-1
+/ip ipsec profile
+add dh-group=modp1024 enc-algorithm=3des hash-algorithm=md5 lifetime=8h name=Profile-IpSec
+/ip ipsec peer
+add address=10.10.10.10/32 name=10.10.10.10 profile=Profile-IpSec
+/ip ipsec proposal
+add auth-algorithms=md5 enc-algorithms=3des lifetime=8h name=Proposal-IpSec
+/ip ipsec policy
+add dst-address=192.168.0.0/24 peer=10.10.10.10 proposal=Proposal-IpSec \
+src-address=192.168.1.0/24 tunnel=yes
+/ip ipsec identity
+add peer=10.10.10.10 secret=12345678
+/ip firewall nat
+add action=accept chain=srcnat dst-address=192.168.0.0/24 src-address=192.168.0.0/24
+/ip firewall nat
+add action=masquerade chain=srcnat ipsec-policy=out,none out-interface=ether6
+MikroTik-2
+/ip ipsec proposal
+add auth-algorithms=md5 enc-algorithms=3des lifetime=8h name=proposal-1
+/ip ipsec peer
+add address=11.11.11.11/32 dh-group=modp1024 enc-algorithm=aes-128 \
+hash-algorithm=md5 lifetime=8h nat-traversal=no secret=12345678
+/ip ipsec policy
+add dst-address=192.168.0.0/24 proposal=md5-3des-8h-gr2 sa-dst-address=\
+11.11.11.11 sa-src-address=10.10.10.10 src-address=192.168.1.0/24 \
+tunnel=yes
+/ip firewall nat
+add action=accept chain=srcnat dst-address=192.168.0.0/24 src-address=192.168.0.0/24
+Проблемы при настройке и работе IpSec в MikroTik
+Настройка Firewall в MikroTik для IpSec
+/ip firewall filter
+add action=accept chain=input comment="Port Access" dst-port=500,1701,4500 \
+in-interface=WAN-ether1 protocol=udp
+Очистить соответствующие ключи IpSec SA
+Добавить статический маршрут для IpSec
+/ip route
+add distance=1 dst-address=192.168.0.0/24 gateway=Bridge-LAN
+

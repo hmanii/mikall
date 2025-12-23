@@ -1,0 +1,64 @@
+#mik dot-test
+/ip address add address=192.168.200.1/24 interface=ether1 network=192.168.200.0
+/ip service set ssh address=192.168.200.0/24
+
+add admin-mac=0E:0B:CC:DE:73:66 auto-mac=no name=br-1
+
+/interface bridge set br-2 admin-mac=00:00:00:00:01:03 auto-mac=no
+
+/interface bridge add name=br-2 vlan-filtering=yes protocol-mode=none
+/interface bridge add name=br-1 vlan-filtering=yes protocol-mode=rstp
+/interface bridge port add bridge=br-2 interface=ether2 internal-path-cost=10 path-cost=10
+/interface bridge port add bridge=br-2 interface=ether3 pvid=20 internal-path-cost=10 path-cost=10
+/interface bridge port add bridge=br-1 interface=ether4 internal-path-cost=10 path-cost=10
+/interface bridge vlan add bridge=br-2 vlan-ids=20 tagged=br-2,ether3 untagged=ether2
+/interface bridge vlan add bridge=br-1 vlan-ids=21 tagged=br-1,ether4
+/interface vlan add name=vlan20 interface=br-2 vlan-id=20
+/interface vlan add name=vlan21 interface=br-1 vlan-id=21
+/ip address add address=192.168.20.1/24 interface=vlan20
+/ip address add address=192.168.21.1/24 interface=vlan21
+
+# DHCP-сервер для VLAN 20
+/ip pool add name=pool_vlan20 ranges=192.168.20.50-192.168.20.200
+/ip dhcp-server add name=dhcp_vlan20 interface=vlan20 address-pool=pool_vlan20
+/ip dhcp-server network add address=192.168.20.0/24 gateway=192.168.20.1 dns-server=1.1.1.1,8.8.8.8
+# DHCP-сервер для VLAN 21
+/ip pool add name=pool_vlan21 ranges=192.168.21.50-192.168.21.200
+/ip dhcp-server add name=dhcp_vlan21 interface=vlan21 address-pool=pool_vlan21
+/ip dhcp-server network add address=192.168.21.0/24 gateway=192.168.21.1 dns-server=1.1.1.1,8.8.8.8
+
+/ip route add disabled=no distance=1 dst-address=0.0.0.0/0 gateway=192.168.200.10 routing-table=main scope=30 suppress-hw-offload=no target-scope=10
+
+/ip firewall filter add action=accept chain=input in-interface=br-2 protocol=icmp comment=PING_br-2
+/ip firewall filter add action=accept chain=input in-interface=vlan21 protocol=icmp comment=PING_vlan21
+/ip firewall filter add action=drop chain=input comment=Drop_forward_INVALID connection-state=invalid
+/ip firewall filter add action=accept chain=forward comment=Allow_ESTABLISHED_RELATED_UNTRACKED connection-state=established,related,untracked
+/ip firewall filter add action=drop chain=forward comment=Drop_forward_INVALID connection-state=invalid
+/ip firewall filter add action=accept chain=input comment=Allow_ESTABLISHED_RELATED_UNTRACKED connection-state=established,related,untracked
+/ip firewall filter add action=accept chain=input in-interface=vlan20 comment=Allow_all_to_vlan20
+/ip firewall filter add action=accept chain=output out-interface=vlan20 comment=Allow_all_input_from_vlan20
+/ip firewall filter add action=accept chain=forward in-interface=vlan20 comment=Allow_all_output_forward_to_vlan20
+/ip firewall filter add action=accept chain=forward out-interface=vlan20 comment=Allow_all_forward_from_vlan20
+
+#---------------------------------------------------------------------------------------------------------
+#mik aoz-test
+/ip address add address=192.168.210.1/24 interface=ether1 network=192.168.210.0
+/ip service set ssh address=192.168.210.0/24
+/interface bridge add name=br-3 vlan-filtering=yes protocol-mode=none
+/interface bridge port add bridge=br-3 interface=ether2 internal-path-cost=10 path-cost=10
+/interface bridge port add bridge=br-3 interface=ether3 pvid=20 internal-path-cost=10 path-cost=10
+/interface bridge vlan add bridge=br-3 vlan-ids=20 tagged=br-3,ether2 untagged=etehr3
+/interface vlan add name=vlan20 interface=br-3 vlan-id=20
+/ip address add address=192.168.20.2/24 interface=vlan20
+
+/ip firewall filter add action=accept chain=input icmp-options=8:0-255 in-interface=br-3 protocol=icmp
+
+
+
+
+/tool mac-scan interface=ether1
+/tool torch interface=ether1 vlan-id=20
+
+
+Rename-VMNetworkAdapter -VMName dotRouter -Name "Network Adapter" -NewName ether1
+Set-VMNetworkAdapterVlan -VMName dotRouter -VMNetworkAdapterName "ether1" -Trunk -AllowedVlanIdList 1-4094 -NativeVlanId 1
